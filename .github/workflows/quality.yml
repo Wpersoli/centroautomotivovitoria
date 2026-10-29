@@ -6,6 +6,8 @@ on:
   pull_request:
     branches: [main]
   workflow_dispatch:
+  schedule:
+    - cron: "17 12 * * *"
 
 permissions:
   contents: read
@@ -22,3 +24,41 @@ jobs:
           node-version: 20
       - name: Run static site quality checks
         run: node scripts/qa.mjs
+
+  production-smoke:
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check production homepage and security headers
+        shell: bash
+        run: |
+          set -euo pipefail
+          base="https://centroautomotivovitoria.vercel.app"
+          headers="$(mktemp)"
+          code="$(curl -sS -L -D "$headers" -o /dev/null -w '%{http_code}' "$base/")"
+          test "$code" = "200"
+          grep -qi '^x-content-type-options: nosniff' "$headers"
+          grep -qi '^x-frame-options: DENY' "$headers"
+          grep -qi '^referrer-policy: strict-origin-when-cross-origin' "$headers"
+          grep -qi '^permissions-policy:' "$headers"
+          rm -f "$headers"
+
+      - name: Check privacy page, favicon, crawler files and custom 404
+        shell: bash
+        run: |
+          set -euo pipefail
+          base="https://centroautomotivovitoria.vercel.app"
+          check_status() {
+            expected="$1"
+            url="$2"
+            actual="$(curl -sS -L -o /dev/null -w '%{http_code}' "$url")"
+            if [ "$actual" != "$expected" ]; then
+              echo "Expected HTTP $expected for $url, got $actual"
+              exit 1
+            fi
+          }
+          check_status 200 "$base/privacidade.html"
+          check_status 200 "$base/favicon.svg"
+          check_status 200 "$base/robots.txt"
+          check_status 200 "$base/sitemap.xml"
+          check_status 404 "$base/rota-inexistente-smoke-test"
