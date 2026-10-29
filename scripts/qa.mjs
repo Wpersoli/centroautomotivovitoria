@@ -20,7 +20,10 @@ const anchors = [...html.matchAll(/\bhref\s*=\s*["']#([^"']+)["']/gi)].map(match
 const missingAnchors = [...new Set(anchors.filter(anchor => !idSet.has(anchor)))];
 assert.deepEqual(missingAnchors, [], `Broken in-page links: ${missingAnchors.join(', ')}`);
 
-const scripts = [...html.matchAll(/<script\b[^>]*>([\s\S]*?)<\/script>/gi)].map(match => match[1]).filter(script => script.trim());
+const scripts = [...html.matchAll(/<script\b([^>]*)>([\s\S]*?)<\/script>/gi)]
+  .filter(match => !/\btype\s*=\s*["']application\/ld\+json["']/i.test(match[1]))
+  .map(match => match[2])
+  .filter(script => script.trim());
 assert.ok(scripts.length > 0, 'Expected inline JavaScript');
 scripts.forEach((source, index) => new vm.Script(source, { filename: `inline-script-${index + 1}.js` }));
 
