@@ -19,6 +19,9 @@ Landing page responsiva do Centro Automotivo Vitória, com identidade azul-marin
 - Cálculo de rota de carro na página: pede permissão para acessar a localização, consulta o serviço de roteamento OSRM e mostra geometria do trajeto, distância e tempo estimado. O visitante também pode abrir o Google Maps para navegação passo a passo e condições de trânsito.
 - Seção de reputação com nota encontrada para o perfil local (4,6/5, 12 avaliações no momento da consulta) e link para conferir as avaliações originais no Google.
 - Metadados de SEO (canonical, Open Graph básico e dados estruturados `AutoRepair` com endereço, telefone e Instagram).
+- Favicon SVG com a identidade visual da marca e página 404 personalizada para endereços inexistentes.
+- Cabeçalhos de segurança configurados na Vercel: `X-Content-Type-Options`, `Referrer-Policy`, `X-Frame-Options` e `Permissions-Policy` compatível com a geolocalização solicitada pelo visitante.
+- Foco de teclado visível e respostas do assistente anunciadas para tecnologias assistivas.
 - A demonstração pré-venda está marcada com noindex,nofollow,noarchive; o sitemap está intencionalmente vazio para não submeter uma demo aos buscadores. Após a venda, revisar domínio/canonical, reativar indexação e regenerar o sitemap.
 - Geocodificação do endereço adiada até o visitante solicitar uma rota, reduzindo chamadas desnecessárias ao Nominatim; requisições de geocodificação/roteamento têm limite de tempo.
 - Layout adaptado para desktop, tablet e celular.
