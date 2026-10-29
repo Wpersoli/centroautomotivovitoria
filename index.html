@@ -67,7 +67,7 @@ footer{padding:30px 0 90px;background:#041127;color:#9eafc8;font-size:11px}.foot
       <a href="#servicos">Serviços</a><a href="#sobre">A oficina</a><a href="#avaliacoes">Avaliações</a><a href="#localizacao">Como chegar</a><a href="#contato">Contato</a>
     </nav>
     <a class="navcta" href="https://wa.me/5511995543736?text=Ol%C3%A1%2C%20vim%20pelo%20site%20do%20Centro%20Automotivo%20Vit%C3%B3ria." target="_blank" rel="noopener">◉ Falar no WhatsApp</a>
-    <button class="menu-toggle" id="menuToggle" aria-label="Abrir menu" aria-expanded="false">☰</button>
+    <button class="menu-toggle" id="menuToggle" aria-label="Abrir menu" aria-controls="navlinks" aria-expanded="false">☰</button>
   </div>
 </header>
 <main id="conteudo">
@@ -119,8 +119,18 @@ footer{padding:30px 0 90px;background:#041127;color:#9eafc8;font-size:11px}.foot
 <script>
 (function(){
  const menu=document.getElementById('menuToggle'), nav=document.getElementById('navlinks');
- menu.addEventListener('click',function(){const open=nav.classList.toggle('open');menu.setAttribute('aria-expanded',String(open));menu.setAttribute('aria-label',open?'Fechar menu':'Abrir menu');menu.textContent=open?'×':'☰';});
- nav.querySelectorAll('a').forEach(a=>a.addEventListener('click',()=>{nav.classList.remove('open');menu.setAttribute('aria-expanded','false');menu.setAttribute('aria-label','Abrir menu');menu.textContent='☰';}));
+ function setMenuOpen(open){
+   nav.classList.toggle('open',open);
+   menu.setAttribute('aria-expanded',String(open));
+   menu.setAttribute('aria-label',open?'Fechar menu':'Abrir menu');
+   menu.textContent=open?'×':'☰';
+   document.body.classList.toggle('menu-open',open&&window.matchMedia('(max-width: 720px)').matches);
+ }
+ menu.addEventListener('click',()=>setMenuOpen(menu.getAttribute('aria-expanded')!=='true'));
+ nav.querySelectorAll('a').forEach(a=>a.addEventListener('click',()=>setMenuOpen(false)));
+ document.addEventListener('keydown',event=>{if(event.key==='Escape'&&menu.getAttribute('aria-expanded')==='true'){setMenuOpen(false);menu.focus();}});
+ document.addEventListener('click',event=>{if(menu.getAttribute('aria-expanded')==='true'&&!nav.contains(event.target)&&!menu.contains(event.target))setMenuOpen(false);});
+ window.addEventListener('resize',()=>{if(window.innerWidth>720)setMenuOpen(false);},{passive:true});
  document.getElementById('year').textContent=new Date().getFullYear();
  const phrases=['Sua confiança em primeiro lugar.','Cuidado para seguir em frente.','Mecânica feita para você.'];let idx=0;const swap=document.getElementById('heroSwap');
  if(!window.matchMedia('(prefers-reduced-motion: reduce)').matches){setInterval(()=>{idx=(idx+1)%phrases.length;swap.animate([{opacity:1,transform:'translateY(0)'},{opacity:0,transform:'translateY(8px)'}],{duration:180,easing:'ease-in',fill:'forwards'}).onfinish=()=>{swap.textContent=phrases[idx];swap.animate([{opacity:0,transform:'translateY(-8px)'},{opacity:1,transform:'translateY(0)'}],{duration:320,easing:'ease-out',fill:'forwards'});};},3600);}
