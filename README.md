@@ -25,6 +25,8 @@ Landing page responsiva do Centro Automotivo Vitória, com identidade azul-marin
 - A demonstração pré-venda está marcada com noindex,nofollow,noarchive; o sitemap está intencionalmente vazio para não submeter uma demo aos buscadores. Após a venda, revisar domínio/canonical, reativar indexação e regenerar o sitemap.
 - Geocodificação do endereço adiada até o visitante solicitar uma rota, reduzindo chamadas desnecessárias ao Nominatim; requisições de geocodificação/roteamento têm limite de tempo.
 - Layout adaptado para desktop, tablet e celular.
+- Verificações automáticas no GitHub Actions para IDs duplicados, links internos quebrados, sintaxe JavaScript, segurança de links externos, campos e botões acessíveis, metadados e recursos essenciais.
+- Smoke tests da produção a cada atualização da branch principal e diariamente: homepage, cabeçalhos de segurança, aviso de privacidade, favicon, robots.txt, sitemap e resposta 404.
 
 ## Dados públicos utilizados
 
