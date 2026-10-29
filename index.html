@@ -197,8 +197,10 @@ footer{padding:30px 0 90px;background:#041127;color:#9eafc8;font-size:11px}.foot
        routeMessage('Rota estimada. A distância e o tempo podem variar; o cálculo não inclui trânsito ao vivo.');
        details.innerHTML='<span><strong>Distância:</strong> '+km+'</span><span><strong>Tempo estimado:</strong> '+time+'</span><span><strong>Trajeto:</strong> carro</span><span><strong>Destino:</strong> Vila Galvão, Guarulhos</span>';
        const mapsUrl='https://www.google.com/maps/dir/?api=1&origin='+encodeURIComponent(origin[0]+','+origin[1])+'&destination='+encodeURIComponent('R. Doze de Maio, 493, Vila Galvão, Guarulhos, SP')+'&travelmode=driving';
-       routeMessage('Rota estimada: '+km+' · '+time+'. O cálculo não inclui trânsito ao vivo; para navegação e trânsito, abra o Google Maps.');
-       if(!document.getElementById('openNavigation')){const a=document.createElement('a');a.id='openNavigation';a.className='btn btn-red';a.target='_blank';a.rel='noopener';a.textContent='Iniciar navegação ↗';details.appendChild(a);}document.getElementById('openNavigation').href=mapsUrl;
+       const wazeUrl='https://waze.com/ul?q='+encodeURIComponent('Rua Doze de Maio, 493, Guarulhos, SP')+'&navigate=yes';
+       routeMessage('Rota estimada: '+km+' · '+time+'. O cálculo não inclui trânsito ao vivo; para navegação e trânsito, abra o Google Maps ou Waze.');
+       const navLink=document.createElement('a');navLink.id='openNavigation';navLink.className='btn btn-red';navLink.target='_blank';navLink.rel='noopener';navLink.textContent='Iniciar navegação no Google Maps ↗';navLink.href=mapsUrl;details.appendChild(navLink);
+       const wazeLink=document.createElement('a');wazeLink.id='openWaze';wazeLink.className='btn btn-outline';wazeLink.target='_blank';wazeLink.rel='noopener';wazeLink.textContent='Abrir no Waze ↗';wazeLink.href=wazeUrl;details.appendChild(wazeLink);
      }catch(e){routeMessage('Não foi possível calcular a rota agora. Verifique a conexão e tente novamente ou abra o Google Maps.');}
      finally{routeBtn.disabled=false;routeBtn.textContent='⌖ Calcular minha rota';}
    },err=>{routeMessage(err.code===1?'A localização foi bloqueada. Permita o acesso à localização no navegador para calcular a rota.':'Não conseguimos obter sua localização. Verifique o GPS e tente novamente.');routeBtn.disabled=false;routeBtn.textContent='⌖ Tentar novamente';},{enableHighAccuracy:true,timeout:15000,maximumAge:30000});
