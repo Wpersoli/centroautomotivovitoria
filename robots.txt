@@ -1,4 +1,5 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://centroautomotivovitoria.vercel.app/sitemap.xml
+# Esta URL é uma demonstração pré-venda; a meta robots aplica noindex.
+# Remover a restrição de indexação e adicionar o sitemap somente após a venda e validação do domínio final.
