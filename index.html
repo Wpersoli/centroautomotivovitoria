@@ -31,6 +31,31 @@ footer{padding:30px 0 90px;background:#041127;color:#9eafc8;font-size:11px}.foot
 @media(max-width:390px){.brandname{font-size:18px}.hero-actions .btn{width:100%}.service-grid{grid-template-columns:1fr 1fr}.service{min-height:205px}.review-list{grid-template-columns:1fr}.review-card{min-height:0}.hero-visual{min-height:300px}.garage-label strong{font-size:21px}.car{height:80px}.wheel{width:39px;height:39px}.visual-chip .number{font-size:27px}}
 @media(prefers-reduced-motion:reduce){*,*:before,*:after{scroll-behavior:auto!important;animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}.reveal{opacity:1;transform:none}}
 </style>
+<link rel="canonical" href="https://centroautomotivovitoria.vercel.app/">
+<meta name="robots" content="index,follow,max-image-preview:large">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://centroautomotivovitoria.vercel.app/">
+<meta property="og:locale" content="pt_BR">
+<meta name="twitter:card" content="summary">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "AutoRepair",
+  "name": "Centro Automotivo Vitória",
+  "url": "https://centroautomotivovitoria.vercel.app/",
+  "telephone": "+55-11-2485-5370",
+  "address": {
+    "@type": "PostalAddress",
+    "streetAddress": "Rua Doze de Maio, 493",
+    "addressLocality": "Guarulhos",
+    "addressRegion": "SP",
+    "postalCode": "07056-120",
+    "addressCountry": "BR"
+  },
+  "areaServed": "Guarulhos, SP",
+  "sameAs": ["https://www.instagram.com/automotivovitoria/"]
+}
+</script>
 </head>
 <body>
 <div class="topline"></div>
@@ -102,19 +127,39 @@ footer{padding:30px 0 90px;background:#041127;color:#9eafc8;font-size:11px}.foot
  function routeMessage(msg){if(status)status.textContent=msg;}
  function formatDistance(m){return m>=1000?(m/1000).toLocaleString('pt-BR',{maximumFractionDigits:1})+' km':Math.round(m)+' m';}
  async function initRouteMap(){
-   if(!window.L||!document.getElementById('routeMap')){routeMessage('O mapa interativo não carregou. Você ainda pode abrir o Google Maps pelos atalhos.');return;}
-   if(!map){map=L.map('routeMap',{scrollWheelZoom:false}).setView([-23.4588,-46.5681],14);L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'&copy; OpenStreetMap'}).addTo(map);}
-   routeMessage('Localizando a oficina no mapa…');
+   if(!window.L||!document.getElementById('routeMap')){routeMessage('O mapa interativo não carregou. Você ainda pode abrir o endereço no Google Maps.');return;}
+   if(map)return;
+   map=L.map('routeMap',{scrollWheelZoom:false}).setView([-23.4588,-46.5681],14);
+   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'&copy; OpenStreetMap'}).addTo(map);
+   // Não consulta o geocodificador em toda visita; a localização exata é resolvida
+   // apenas quando a pessoa pede o cálculo da rota.
+   routeMessage('Mapa carregado. Toque em “Calcular minha rota” para solicitar sua localização e traçar o percurso.');
+   window.setTimeout(()=>map&&map.invalidateSize(),150);
+ }
+ async function fetchJsonWithTimeout(url,timeoutMs=10000){
+   const controller=new AbortController();
+   const timer=window.setTimeout(()=>controller.abort(),timeoutMs);
    try{
-     const res=await fetch('https://nominatim.openstreetmap.org/search?format=jsonv2&limit=1&q='+encodeURIComponent(destinationQuery),{headers:{'Accept':'application/json'}});
-     if(!res.ok)throw new Error('geocode');
-     const rows=await res.json();
-     if(!rows.length)throw new Error('notfound');
-     destination=[Number(rows[0].lat),Number(rows[0].lon)];
+     const response=await fetch(url,{signal:controller.signal,headers:{'Accept':'application/json'}});
+     if(!response.ok)throw new Error('Serviço externo indisponível');
+     return await response.json();
+   }finally{window.clearTimeout(timer);}
+ }
+ async function locateDestination(){
+   if(destination)return destination;
+   routeMessage('Localizando o endereço da oficina…');
+   const url='https://nominatim.openstreetmap.org/search?format=jsonv2&limit=1&countrycodes=br&q='+encodeURIComponent(destinationQuery);
+   const rows=await fetchJsonWithTimeout(url,9000);
+   if(!Array.isArray(rows)||!rows.length)throw new Error('Endereço não localizado');
+   const found=[Number(rows[0].lat),Number(rows[0].lon)];
+   if(!Number.isFinite(found[0])||!Number.isFinite(found[1]))throw new Error('Coordenadas inválidas');
+   destination=found;
+   if(map){
+     if(destinationMarker)map.removeLayer(destinationMarker);
      destinationMarker=L.marker(destination).addTo(map).bindPopup('<strong>Centro Automotivo Vitória</strong><br>R. Doze de Maio, 493 — Vila Galvão');
-     map.setView(destination,16);destinationMarker.openPopup();
-     routeMessage('Destino localizado. Toque em “Calcular minha rota” para calcular o trajeto a partir da sua posição.');
-   }catch(e){routeMessage('Não foi possível carregar a posição exata agora. Você pode abrir o endereço no Google Maps.');}
+     map.setView(destination,15);
+   }
+   return destination;
  }
  async function calculateRoute(){
    if(!navigator.geolocation){routeMessage('Seu navegador não disponibiliza geolocalização. Abra o trajeto no Google Maps.');return;}
@@ -122,12 +167,12 @@ footer{padding:30px 0 90px;background:#041127;color:#9eafc8;font-size:11px}.foot
    navigator.geolocation.getCurrentPosition(async pos=>{
      const origin=[pos.coords.latitude,pos.coords.longitude];
      try{
-       if(!destination){await initRouteMap();}
+       if(!map)await initRouteMap();
+       await locateDestination();
        if(!destination)throw new Error('destination');
-       routeMessage('Calculando rota de carro em tempo real…');
+       routeMessage('Calculando a distância e o tempo estimado do percurso…');
        const url='https://router.project-osrm.org/route/v1/driving/'+origin[1]+','+origin[0]+';'+destination[1]+','+destination[0]+'?overview=full&geometries=geojson&steps=true';
-       const response=await fetch(url);if(!response.ok)throw new Error('routing');
-       const data=await response.json();if(data.code!=='Ok'||!data.routes?.length)throw new Error('noroute');
+       const data=await fetchJsonWithTimeout(url,13000);if(data.code!=='Ok'||!data.routes?.length)throw new Error('noroute');
        const route=data.routes[0];
        if(routeLine)map.removeLayer(routeLine);
        if(userMarker)map.removeLayer(userMarker);
@@ -136,10 +181,10 @@ footer{padding:30px 0 90px;background:#041127;color:#9eafc8;font-size:11px}.foot
        map.fitBounds(routeLine.getBounds().pad(.14));
        const minutes=Math.round(route.duration/60),km=formatDistance(route.distance);
        const time=minutes>=60?Math.floor(minutes/60)+' h '+(minutes%60)+' min':minutes+' min';
-       routeMessage('Rota calculada. A distância e o tempo são estimativas e podem variar com o trânsito.');
+       routeMessage('Rota estimada. A distância e o tempo podem variar; o cálculo não inclui trânsito ao vivo.');
        details.innerHTML='<span><strong>Distância:</strong> '+km+'</span><span><strong>Tempo estimado:</strong> '+time+'</span><span><strong>Trajeto:</strong> carro</span><span><strong>Destino:</strong> Vila Galvão, Guarulhos</span>';
        const mapsUrl='https://www.google.com/maps/dir/?api=1&origin='+encodeURIComponent(origin[0]+','+origin[1])+'&destination='+encodeURIComponent('R. Doze de Maio, 493, Vila Galvão, Guarulhos, SP')+'&travelmode=driving';
-       routeMessage('Rota calculada: '+km+' · '+time+'. Para navegação passo a passo e condições de trânsito, abra o Google Maps.');
+       routeMessage('Rota estimada: '+km+' · '+time+'. O cálculo não inclui trânsito ao vivo; para navegação e trânsito, abra o Google Maps.');
        if(!document.getElementById('openNavigation')){const a=document.createElement('a');a.id='openNavigation';a.className='btn btn-red';a.target='_blank';a.rel='noopener';a.textContent='Iniciar navegação ↗';details.appendChild(a);}document.getElementById('openNavigation').href=mapsUrl;
      }catch(e){routeMessage('Não foi possível calcular a rota agora. Verifique a conexão e tente novamente ou abra o Google Maps.');}
      finally{routeBtn.disabled=false;routeBtn.textContent='⌖ Calcular minha rota';}
